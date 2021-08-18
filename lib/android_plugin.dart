@@ -1,14 +1,17 @@
-
 import 'dart:async';
 
+import 'utils/string_constants.dart';
 import 'package:flutter/services.dart';
 
 class AndroidPlugin {
   static const MethodChannel _channel =
-      const MethodChannel('android_plugin');
+      const MethodChannel(StringConstants.channel);
 
-  static Future<String?> get platformVersion async {
-    final String? version = await _channel.invokeMethod('getPlatformVersion');
-    return version;
+  static Future<bool> get permissionCheck async =>
+      await _channel.invokeMethod(StringConstants.methodPermissionCheck);
+
+  static Future<void> get requestPermission async {
+    await _channel.invokeMethod(StringConstants.methodPermissionRequest);
+    return;
   }
 }
