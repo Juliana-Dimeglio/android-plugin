@@ -1,10 +1,13 @@
 import 'package:android_plugin/android_plugin.dart';
+import 'widgets/coordinates_card.dart';
+import 'widgets/plugin_button.dart';
+import 'features/plugin_functionality.dart';
 import 'utils/colors_constants.dart';
 import 'utils/numeric_constants.dart';
 import 'package:flutter/cupertino.dart';
 import 'utils/string_constants.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'widgets/gesture_button.dart';
 
 void main() {
   runApp(MyApp());
@@ -21,69 +24,29 @@ class _MyAppState extends State<MyApp> {
   bool _isInitialized = false;
   bool _isStopped = false;
 
+  PluginFunctionality _pluginFunctionality = PluginFunctionality();
+
   @override
   void initState() {
     super.initState();
   }
 
-  Future<bool> _checkPermission() async {
-    bool _result = false;
-    try {
-      _result = await AndroidPlugin.permissionCheck;
-    } on PlatformException {
-      print(
-        StringConstants.checkPermissionError,
-      );
-    }
-    return _permissionGranted = _result;
+  Future<void> _checkPermission() async =>
+      _permissionGranted = await _pluginFunctionality.checkPermission();
+
+  Future<void> _initialize() async =>
+      _isInitialized = await _pluginFunctionality.initialize();
+
+  Future<void> _requestPermission() async =>
+      _hasPermission = await _pluginFunctionality.requestPermission();
+
+  Future<void> _getLocation() async {
+    _isStopped = false;
+    return await _pluginFunctionality.getLocation();
   }
 
-  Future<bool> _requestPermission() async {
-    bool _result = false;
-    try {
-      _result = await AndroidPlugin.requestPermission;
-    } on PlatformException {
-      print(
-        StringConstants.requestPermissionError,
-      );
-    }
-    return _hasPermission = _result;
-  }
-
-  Future<void> getLocation() async {
-    try {
-      await AndroidPlugin.getLocation;
-    } on PlatformException {
-      print(
-        StringConstants.locationError,
-      );
-    }
-    return;
-  }
-
-  Future<bool> initialize() async {
-    bool _initialize = false;
-    try {
-      _initialize = await AndroidPlugin.initialize;
-    } on PlatformException {
-      print(
-        StringConstants.initializeError,
-      );
-    }
-    return _isInitialized = _initialize;
-  }
-
-  Future<bool> stopLocation() async {
-    bool _stopped = false;
-    try {
-      _stopped = await AndroidPlugin.stopLocationRequest;
-    } on PlatformException {
-      print(
-        StringConstants.stopLocationError,
-      );
-    }
-    return _isStopped = _stopped;
-  }
+  Future<void> _stopLocationRequest() async =>
+      _isStopped = await _pluginFunctionality.stopLocation();
 
   @override
   Widget build(BuildContext context) {
@@ -109,40 +72,11 @@ class _MyAppState extends State<MyApp> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      Container(
-                        margin: EdgeInsets.all(
-                          NumericConstants.marginGestureDetector,
-                        ),
-                        height: NumericConstants.heightGestureDetector,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(
-                            NumericConstants.borderRadiusGestureDetector,
-                          ),
-                          color: ColorsConstants.gestureDetectorColor,
-                        ),
-                        child: GestureDetector(
-                          onTap: () {
-                            _checkPermission();
-                            setState(() {});
-                          },
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: NumericConstants
-                                  .verticalPaddingCheckPermission,
-                              horizontal: NumericConstants
-                                  .horizontalPaddingCheckPermission,
-                            ),
-                            child: Text(
-                              StringConstants.checkPermissionButton,
-                              style: TextStyle(
-                                color: Colors.grey.shade300,
-                                fontWeight: FontWeight.bold,
-                                fontSize:
-                                    NumericConstants.fontSizePermissionButton,
-                              ),
-                            ),
-                          ),
-                        ),
+                      GestureButton(
+                        buttonText: StringConstants.checkPermissionButton,
+                        onTap: () => setState(() {
+                          _checkPermission();
+                        }),
                       ),
                       Text(
                         _permissionGranted && _hasPermission
@@ -155,60 +89,19 @@ class _MyAppState extends State<MyApp> {
                       ),
                     ],
                   ),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _requestPermission();
-                      });
-                    },
-                    child: Text(
-                      StringConstants.requestPermissionButton,
-                      style: TextStyle(
-                        fontSize: NumericConstants.fontSizeButtonsText,
-                        color: Colors.grey.shade300,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      primary: Colors.red.shade900,
-                    ),
+                  PluginButton(
+                    onPressed: _requestPermission,
+                    buttonText: StringConstants.requestPermissionButton,
+                    fontSize: NumericConstants.fontSizePermissionButton,
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      Container(
-                        margin: EdgeInsets.all(
-                          NumericConstants.marginGestureDetector,
-                        ),
-                        height: NumericConstants.heightGestureDetector,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(
-                            NumericConstants.borderRadiusGestureDetector,
-                          ),
-                          color: ColorsConstants.gestureDetectorColor,
-                        ),
-                        child: GestureDetector(
-                          onTap: () {
-                            initialize();
-                            setState(() {});
-                          },
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: NumericConstants
-                                  .verticalPaddingCheckPermission,
-                              horizontal: NumericConstants
-                                  .horizontalPaddingCheckPermission,
-                            ),
-                            child: Text(
-                              StringConstants.initializeButton,
-                              style: TextStyle(
-                                color: Colors.grey.shade300,
-                                fontWeight: FontWeight.bold,
-                                fontSize:
-                                    NumericConstants.fontSizePermissionButton,
-                              ),
-                            ),
-                          ),
-                        ),
+                      GestureButton(
+                        onTap: () => setState(() {
+                          _initialize();
+                        }),
+                        buttonText: StringConstants.initializeButton,
                       ),
                       Text(
                         _isInitialized
@@ -224,102 +117,26 @@ class _MyAppState extends State<MyApp> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          _isStopped = false;
-                          getLocation();
-                        },
-                        child: Text(
-                          StringConstants.locationButton,
-                          style: TextStyle(
-                            fontSize: NumericConstants.fontSizeCoordinatesText,
-                            color: Colors.grey.shade300,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          primary: Colors.red.shade900,
-                        ),
+                      PluginButton(
+                        onPressed: _getLocation,
+                        buttonText: StringConstants.locationButton,
+                        fontSize: NumericConstants.fontSizeCoordinatesText,
                       ),
-                      ElevatedButton(
-                        onPressed: () {
-                          stopLocation();
-                        },
-                        child: Text(
-                          StringConstants.stopLocationButton,
-                          style: TextStyle(
-                            fontSize: NumericConstants.fontSizeCoordinatesText,
-                            color: Colors.grey.shade300,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          primary: Colors.red.shade900,
-                        ),
-                      ),
+                      PluginButton(
+                        onPressed: _stopLocationRequest,
+                        buttonText: StringConstants.stopLocationButton,
+                        fontSize: NumericConstants.fontSizeCoordinatesText,
+                      )
                     ],
                   ),
                   StreamBuilder(
                     stream: AndroidPlugin.locationStream,
                     builder: (context, snapshot) {
-                      return snapshot.hasData
-                          ? Container(
-                              padding: EdgeInsets.all(
-                                NumericConstants.paddingCoordinates,
-                              ),
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: Colors.black,
-                                ),
-                              ),
-                              child: !_isStopped
-                                  ? Column(
-                                      children: [
-                                        Text(
-                                          snapshot.data
-                                              .toString()
-                                              .split("%")
-                                              .first,
-                                          style: TextStyle(
-                                            fontSize: NumericConstants
-                                                .fontSizeLocationText,
-                                          ),
-                                        ),
-                                        Text(
-                                          snapshot.data
-                                              .toString()
-                                              .split("%")
-                                              .last,
-                                          style: TextStyle(
-                                            fontSize: NumericConstants
-                                                .fontSizeLocationText,
-                                          ),
-                                        ),
-                                      ],
-                                    )
-                                  : Text(
-                                      snapshot.data.toString(),
-                                      style: TextStyle(
-                                        fontSize: NumericConstants
-                                            .fontSizeLocationText,
-                                      ),
-                                    ),
-                            )
-                          : Container(
-                              padding: EdgeInsets.all(
-                                NumericConstants.paddingCoordinates,
-                              ),
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: Colors.black,
-                                ),
-                              ),
-                              child: Text(
-                                StringConstants.locationNotFound,
-                                style: TextStyle(
-                                  fontSize:
-                                      NumericConstants.fontSizeLocationText,
-                                ),
-                              ),
-                            );
+                      return CoordinatesCard(
+                        data: snapshot.data,
+                        hasData: snapshot.hasData,
+                        isStopped: _isStopped,
+                      );
                     },
                   ),
                 ],
